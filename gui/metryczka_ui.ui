@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>717</width>
+    <width>606</width>
     <height>666</height>
    </rect>
   </property>
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>40</y>
-      <width>691</width>
+      <width>571</width>
       <height>521</height>
      </rect>
     </property>
@@ -968,6 +968,9 @@
      <property name="text">
       <string>Półprzezroczyste</string>
      </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
     </widget>
     <widget class="QLabel" name="label_3">
      <property name="geometry">
@@ -986,174 +989,6 @@
      <property name="text">
       <string>Pamiętaj, aby wydrukować metryczki na kolorowej drukarce!</string>
      </property>
-    </widget>
-    <widget class="QWidget" name="layoutWidget_2">
-     <property name="geometry">
-      <rect>
-       <x>560</x>
-       <y>30</y>
-       <width>120</width>
-       <height>471</height>
-      </rect>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_5">
-      <item>
-       <widget class="QCheckBox" name="k1_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k2_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k3_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k4_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k5_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k6_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k7_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k8_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k9_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k10_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k11_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="k12_pom">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>POMOCNIK</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
     </widget>
     <widget class="QWidget" name="verticalLayoutWidget">
      <property name="geometry">
@@ -1376,13 +1211,13 @@
      </rect>
     </property>
     <property name="text">
-     <string>wersja 1.1 z dn. 24.08.2025</string>
+     <string>wersja 1.2 z dn. 27.06.2026</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pbReset">
     <property name="geometry">
      <rect>
-      <x>650</x>
+      <x>530</x>
       <y>10</y>
       <width>50</width>
       <height>22</height>
@@ -1398,7 +1233,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>717</width>
+     <width>606</width>
      <height>19</height>
     </rect>
    </property>
@@ -1413,73 +1248,61 @@
   <tabstop>k1_klubowa</tabstop>
   <tabstop>k1_wlasna</tabstop>
   <tabstop>k1_dop</tabstop>
-  <tabstop>k1_pom</tabstop>
   <tabstop>k2_en</tabstop>
   <tabstop>k2_edit</tabstop>
   <tabstop>k2_klubowa</tabstop>
   <tabstop>k2_wlasna</tabstop>
   <tabstop>k2_dop</tabstop>
-  <tabstop>k2_pom</tabstop>
   <tabstop>k3_en</tabstop>
   <tabstop>k3_edit</tabstop>
   <tabstop>k3_klubowa</tabstop>
   <tabstop>k3_wlasna</tabstop>
   <tabstop>k3_dop</tabstop>
-  <tabstop>k3_pom</tabstop>
   <tabstop>k4_en</tabstop>
   <tabstop>k4_edit</tabstop>
   <tabstop>k4_klubowa</tabstop>
   <tabstop>k4_wlasna</tabstop>
   <tabstop>k4_dop</tabstop>
-  <tabstop>k4_pom</tabstop>
   <tabstop>k5_en</tabstop>
   <tabstop>k5_edit</tabstop>
   <tabstop>k5_klubowa</tabstop>
   <tabstop>k5_wlasna</tabstop>
   <tabstop>k5_dop</tabstop>
-  <tabstop>k5_pom</tabstop>
   <tabstop>k6_en</tabstop>
   <tabstop>k6_edit</tabstop>
   <tabstop>k6_klubowa</tabstop>
   <tabstop>k6_wlasna</tabstop>
   <tabstop>k6_dop</tabstop>
-  <tabstop>k6_pom</tabstop>
   <tabstop>k7_en</tabstop>
   <tabstop>k7_edit</tabstop>
   <tabstop>k7_klubowa</tabstop>
   <tabstop>k7_wlasna</tabstop>
   <tabstop>k7_dop</tabstop>
-  <tabstop>k7_pom</tabstop>
   <tabstop>k8_en</tabstop>
   <tabstop>k8_edit</tabstop>
   <tabstop>k8_klubowa</tabstop>
   <tabstop>k8_wlasna</tabstop>
   <tabstop>k8_dop</tabstop>
-  <tabstop>k8_pom</tabstop>
   <tabstop>k9_en</tabstop>
   <tabstop>k9_edit</tabstop>
   <tabstop>k9_klubowa</tabstop>
   <tabstop>k9_wlasna</tabstop>
   <tabstop>k9_dop</tabstop>
-  <tabstop>k9_pom</tabstop>
   <tabstop>k10_en</tabstop>
   <tabstop>k10_edit</tabstop>
   <tabstop>k10_klubowa</tabstop>
   <tabstop>k10_wlasna</tabstop>
   <tabstop>k10_dop</tabstop>
-  <tabstop>k10_pom</tabstop>
   <tabstop>k11_en</tabstop>
   <tabstop>k11_edit</tabstop>
   <tabstop>k11_klubowa</tabstop>
   <tabstop>k11_wlasna</tabstop>
   <tabstop>k11_dop</tabstop>
-  <tabstop>k11_pom</tabstop>
   <tabstop>k12_en</tabstop>
   <tabstop>k12_edit</tabstop>
   <tabstop>k12_klubowa</tabstop>
   <tabstop>k12_wlasna</tabstop>
   <tabstop>k12_dop</tabstop>
-  <tabstop>k12_pom</tabstop>
   <tabstop>pbZapisz</tabstop>
  </tabstops>
  <resources/>

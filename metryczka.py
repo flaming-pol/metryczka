@@ -15,6 +15,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
+from enum import IntEnum
 
 import pymupdf
 from PyQt6.QtWidgets import (
@@ -29,12 +30,16 @@ from PyQt6.QtWidgets import (
 from gui.metryczka_ui import Ui_MainWindow
 from metryczka_cli import (
     stamp_dop,
-    stamp_pom,
     stamp_wlasna,
     stamp_klubowa,
     card_hide,
     t_zawody,
 )
+
+
+class CardSize(IntEnum):
+    SMALL = 0
+    MEDIUM = 28
 
 
 class ScoreCard:
@@ -53,6 +58,7 @@ class ScoreSheet:
     def __init__(self, filename):
         self.filename = filename
         self.cards = []
+        self.card_size = CardSize.SMALL
         self._doc = None
         self._load()
 
@@ -62,10 +68,36 @@ class ScoreSheet:
             w = page.get_text("words")
             card = None
             for r in w:
-                if not card and r[4] == "pieczątka":
+                if not card and (r[4] == "pieczątka"):
                     card = ScoreCard(page, r[0], r[1])
-                if card and r[4][:-1] in t_zawody:
+                if card and (r[4][:-1] in t_zawody):
+                    shoots = 0
                     card.name = r[4][:-1]
+                    mpos = card.name.rfind('m')
+                    if mpos > 0:
+                        s = card.name[mpos+1:]
+                        if (len(s) == 1) or (len(s) == 2 and s.isdecimal() == True):
+                            shoots = int(s)
+                        elif not s.isdecimal():
+                            c_tmp = ""
+                            for c in reversed(s):
+                                if c.isdecimal():
+                                    c_tmp += c
+                                else:
+                                    break
+                            if c_tmp:
+                                shoots = int(c_tmp[::-1])
+                        # print(shoots)
+                        if (shoots >= 15) and (shoots < 30) and (
+                                self.card_size < CardSize.MEDIUM):
+                            self.card_size = CardSize.MEDIUM
+                        if shoots > 20 or shoots == 0:
+                            QMessageBox.critical(
+                                None, "Oh!",
+                                f"W tej wersji program obsługuje max. konkurencje 20-strzałowe ({card.name})!"
+                            )
+                            card = None
+                            continue
                     self.cards.append(card)
                     card = None
 
@@ -79,7 +111,6 @@ class ScoreSheet:
 
 class MainUI(QMainWindow):
     def __init__(self):
-        pomoc_info = True
         super().__init__()
         self.score_sheet = None
         self.ui = Ui_MainWindow()
@@ -92,20 +123,19 @@ class MainUI(QMainWindow):
         for i in range(1, 13):
             btn_klubowa = getattr(self.ui, f"k{i}_klubowa")
             btn_wlasna = getattr(self.ui, f"k{i}_wlasna")
-            cb_pomoc = getattr(self.ui, f"k{i}_pom")
+            cb_dop = getattr(self.ui, f"k{i}_dop")
             btn_klubowa.clicked.connect(lambda c, x=i: self.uncheck(f"k{x}_wlasna"))
             btn_wlasna.clicked.connect(lambda c, y=i: self.uncheck(f"k{y}_klubowa"))
-            cb_pomoc.clicked.connect(self.pomoc_info)
+            cb_dop.clicked.connect(lambda c, y=i: self.dop_check(y))
 
     def reset_scene(self):
         self.score_sheet = None
-        self.ui.cb_przezroczyste.setChecked(False)
+        self.ui.cb_przezroczyste.setChecked(True)
         for i in range(1, 13):
             text = getattr(self.ui, f"k{i}_edit")
             btn_klubowa = getattr(self.ui, f"k{i}_klubowa")
             btn_wlasna = getattr(self.ui, f"k{i}_wlasna")
             cb_dop = getattr(self.ui, f"k{i}_dop")
-            cb_pomoc = getattr(self.ui, f"k{i}_pom")
             cb_enable = getattr(self.ui, f"k{i}_en")
             text.setText("")
             btn_klubowa.setEnabled(False)
@@ -114,8 +144,6 @@ class MainUI(QMainWindow):
             btn_wlasna.setChecked(False)
             cb_dop.setEnabled(False)
             cb_dop.setChecked(False)
-            cb_pomoc.setEnabled(False)
-            cb_pomoc.setChecked(False)
             cb_enable.setEnabled(False)
             cb_enable.setChecked(False)
 
@@ -123,16 +151,18 @@ class MainUI(QMainWindow):
         w = getattr(self.ui, obj_name)
         w.setChecked(False)
 
-    def pomoc_info(self):
-        if not self.pomoc_info:
-            return
-        QMessageBox.warning(
-            self, "Uwaga!",
-            'Opcję "POMOCNIK" zaznacz TYLKO WTEDY gdy pełnisz funkcję na zawodach! '
-            'Twoje prawo do statusu "pomocnika" powinno być ZAWSZE ustalane z '
-            'organizatorem zawodów.'
-        )
-        self.pomoc_info = False
+    def dop_check(self, dop_id):
+        for i in range(1, 13):
+            if i == dop_id:
+                continue
+            cb_dop = getattr(self.ui, f"k{i}_dop")
+            if cb_dop.isChecked():
+                QMessageBox.critical(
+                    self, "Oh!",
+                    "Pieczątka z dopuszczeneim może być tylko na jednej metryczce!"
+                )
+                cb_main_dop = getattr(self.ui, f"k{dop_id}_dop")
+                cb_main_dop.setChecked(False)
 
     def load_data(self):
         self.reset_scene()
@@ -153,13 +183,11 @@ class MainUI(QMainWindow):
             btn_klubowa = getattr(self.ui, f"k{i+1}_klubowa")
             btn_wlasna = getattr(self.ui, f"k{i+1}_wlasna")
             cb_dop = getattr(self.ui, f"k{i+1}_dop")
-            cb_pomoc = getattr(self.ui, f"k{i+1}_pom")
             cb_enable = getattr(self.ui, f"k{i+1}_en")
             text.setText(c.name)
             btn_klubowa.setEnabled(True)
             btn_wlasna.setEnabled(True)
             cb_dop.setEnabled(True)
-            cb_pomoc.setEnabled(True)
             cb_enable.setEnabled(True)
             cb_enable.setChecked(True)
         if self.ui.k1_edit.text() == "":
@@ -181,6 +209,7 @@ class MainUI(QMainWindow):
         if not filename or not filename[0]:
             return
         opacity = bool(self.ui.cb_przezroczyste.isChecked())
+        card_size = self.score_sheet.card_size
         for i, c in enumerate(self.score_sheet.cards):
             if i >= 12:
                 QMessageBox.warning(
@@ -191,19 +220,16 @@ class MainUI(QMainWindow):
             klubowa = getattr(self.ui, f"k{i+1}_klubowa")
             wlasna = getattr(self.ui, f"k{i+1}_wlasna")
             dop = getattr(self.ui, f"k{i+1}_dop")
-            pomoc = getattr(self.ui, f"k{i+1}_pom")
             cb_enable = getattr(self.ui, f"k{i+1}_en")
             if not cb_enable.isChecked():
-                card_hide(c.page, c.X, c.Y)
+                card_hide(c.page, c.X, c.Y, card_size.value)
                 continue
             if klubowa.isChecked():
-                stamp_klubowa(c.page, c.X, c.Y, 0.65 if opacity else 1)
+                stamp_klubowa(c.page, c.X, c.Y, 0.60 if opacity else 1)
             if wlasna.isChecked():
-                stamp_wlasna(c.page, c.X, c.Y, 0.65 if opacity else 1)
+                stamp_wlasna(c.page, c.X, c.Y, 0.60 if opacity else 1)
             if dop.isChecked():
-                stamp_dop(c.page, c.X, c.Y, True if pomoc.isChecked() else False)
-            if pomoc.isChecked():
-                stamp_pom(c.page, c.X, c.Y)
+                stamp_dop(c.page, c.X, c.Y, card_size.value)
         self.score_sheet.save(filename[0])
         QMessageBox.information(
             self, "Zrobione!",
