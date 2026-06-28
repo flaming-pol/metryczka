@@ -18,7 +18,7 @@ jobs:
           - os: macos-latest
             TARGET: macos
             CMD_BUILD: >
-              pyinstaller -F -w --add-data="fonts/*;fonts" metryczka.py
+              pyinstaller -F -w --add-data="fonts/*:fonts" metryczka.py
               cd dist/ &&
               zip -r9 metryczka-macOS metryczka.app/
             OUT_FILE_NAME: metryczka-macOS.zip
@@ -33,7 +33,7 @@ jobs:
           - os: ubuntu-latest
             TARGET: linux
             CMD_BUILD: >
-              pyinstaller -F -w --add-data="fonts/*;fonts" metryczka.py
+              pyinstaller -F -w --add-data="fonts/*:fonts" metryczka.py
               cd dist/ &&
               tar -czvf metryczka-linux.tar.gz metryczka
             OUT_FILE_NAME: metryczka-linux.tar.gz
