@@ -76,25 +76,32 @@ class ScoreSheet:
                     mpos = card.name.rfind('m')
                     if mpos > 0:
                         s = card.name[mpos+1:]
-                        if (len(s) == 1) or (len(s) == 2 and s.isdecimal() == True):
+                        if s.isdecimal() == True and len(s) in [1, 2]:
                             shoots = int(s)
                         elif not s.isdecimal():
-                            c_tmp = ""
-                            for c in reversed(s):
-                                if c.isdecimal():
-                                    c_tmp += c
-                                else:
+                            # np. Pcz25m10z13
+                            # np. Pcz25m30ISSF
+                            # np. Kcz50m20L
+                            if not s[-1].isdecimal():
+                                # usuniecie literek z końca
+                                for i, c in enumerate(reversed(s)):
+                                    if c.isdecimal():
+                                        s = s[:-i]
+                                        break
+                            for i, c in enumerate(reversed(s)):
+                                # usuniecie "z" w przypadku 10z13, 20z30 itp.
+                                if not c.isdecimal():
+                                    s = s[i+1:]
                                     break
-                            if c_tmp:
-                                shoots = int(c_tmp[::-1])
-                        # print(shoots)
+                            shoots = int(s)
+                        print(f"{card.name} : {shoots}")
                         if (shoots >= 15) and (shoots < 30) and (
                                 self.card_size < CardSize.MEDIUM):
                             self.card_size = CardSize.MEDIUM
                         if shoots > 20 or shoots == 0:
                             QMessageBox.critical(
                                 None, "Oh!",
-                                f"W tej wersji program obsługuje max. konkurencje 20-strzałowe ({card.name})!"
+                                f"W tej wersji program obsługuje max. konkurencje 20-strzałowe ({card.name} : {shoots})!"
                             )
                             card = None
                             continue
