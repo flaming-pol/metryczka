@@ -20,7 +20,7 @@ jobs:
             CMD_BUILD: >
               pyinstaller -w --add-data="fonts/*:fonts" --name metryczka metryczka.py &&
               cd dist/ &&
-              zip -r9 metryczka-macOS-arm64 metryczka.app/
+              zip -ry9 metryczka-macOS-arm64 metryczka.app/
             OUT_FILE_NAME: metryczka-macOS-arm64.zip
             ASSET_MIME: application/zip
 
@@ -29,7 +29,7 @@ jobs:
             CMD_BUILD: >
               pyinstaller -w --add-data="fonts/*:fonts" --name metryczka metryczka.py &&
               cd dist/ &&
-              zip -r9 metryczka-macOS-intel metryczka.app/
+              zip -ry9 metryczka-macOS-intel metryczka.app/
             OUT_FILE_NAME: metryczka-macOS-intel.zip
             ASSET_MIME: application/zip
 
