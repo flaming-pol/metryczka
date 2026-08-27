@@ -16,12 +16,21 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            TARGET: macos
+            TARGET: macos-arm64
             CMD_BUILD: >
-              pyinstaller -F -w --add-data="fonts/*:fonts" metryczka.py &&
+              pyinstaller -w --add-data="fonts/*:fonts" --name metryczka metryczka.py &&
               cd dist/ &&
-              zip -r9 metryczka-macOS metryczka.app/
-            OUT_FILE_NAME: metryczka-macOS.zip
+              zip -r9 metryczka-macOS-arm64 metryczka.app/
+            OUT_FILE_NAME: metryczka-macOS-arm64.zip
+            ASSET_MIME: application/zip
+
+          - os: macos-15-intel
+            TARGET: macos-intel
+            CMD_BUILD: >
+              pyinstaller -w --add-data="fonts/*:fonts" --name metryczka metryczka.py &&
+              cd dist/ &&
+              zip -r9 metryczka-macOS-intel metryczka.app/
+            OUT_FILE_NAME: metryczka-macOS-intel.zip
             ASSET_MIME: application/zip
 
           - os: windows-latest
