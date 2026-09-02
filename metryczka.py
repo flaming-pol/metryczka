@@ -19,6 +19,8 @@ import sys
 from enum import IntEnum
 
 import pymupdf
+from PyQt6.QtCore import QUrl
+from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QDialog,
     QApplication,
@@ -36,6 +38,15 @@ from metryczka_cli import (
     card_hide,
     t_zawody,
 )
+
+
+def open_pdf(filename):
+    """
+    Otwiera PDF w domyślnej aplikacji systemu Windows, Linux lub macOS.
+    """
+    pdf_url = QUrl.fromLocalFile(os.path.abspath(filename))
+    if not QDesktopServices.openUrl(pdf_url):
+        raise OSError("System nie znalazł aplikacji do otwierania plików PDF.")
 
 
 class CardSize(IntEnum):
@@ -350,11 +361,20 @@ class MainUI(QMainWindow):
             )
             return
         self.score_sheet.save(filename[0], selected_cards)
-        os.startfile(filename[0])   # Otwarcie nowego PDF po zapisie
-        QMessageBox.information(
-            self, "Zrobione!",
-            f"Ostemplowane metryczki zapisano do: {filename[0]}"
-        )
+        try:
+            open_pdf(filename[0])
+        except Exception as error:
+            QMessageBox.warning(
+                self,
+                "Nie udało się otworzyć PDF",
+                f"Plik został zapisany poprawnie, ale nie udało się go "
+                f"automatycznie otworzyć:\n{error}",
+            )
+        else:
+            QMessageBox.information(
+                self, "Zrobione!",
+                f"Ostemplowane metryczki zapisano do: {filename[0]}"
+            )
         self.score_sheet.reset()
 
 
