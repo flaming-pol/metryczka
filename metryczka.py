@@ -14,10 +14,13 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import sys
 from enum import IntEnum
 
 import pymupdf
+from PyQt6.QtCore import QUrl
+from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QDialog,
     QApplication,
@@ -37,16 +40,27 @@ from metryczka_cli import (
 )
 
 
+def open_pdf(filename):
+    """
+    Otwiera PDF w domyślnej aplikacji systemu Windows, Linux lub macOS.
+    """
+    pdf_url = QUrl.fromLocalFile(os.path.abspath(filename))
+    if not QDesktopServices.openUrl(pdf_url):
+        raise OSError("System nie znalazł aplikacji do otwierania plików PDF.")
+
+
 class CardSize(IntEnum):
     SMALL = 0
     MEDIUM = 28
 
 
 class ScoreCard:
-    def __init__(self, page, X=0, Y=0):
+    def __init__(self, page, page_number, X=0, Y=0):
         self.X = X
         self.Y = Y
         self.page = page
+        self.page_number = page_number
+        self.rect = None
         self.name = ""
         self.locked = False
 
@@ -63,13 +77,15 @@ class ScoreSheet:
         self._load()
 
     def _load(self):
+        if self._doc:
+            self._doc.close()
         self._doc = pymupdf.open(self.filename)
-        for page in self._doc:
+        for page_number, page in enumerate(self._doc):
             w = page.get_text("words")
             card = None
             for r in w:
                 if not card and (r[4] == "pieczątka"):
-                    card = ScoreCard(page, r[0], r[1])
+                    card = ScoreCard(page, page_number, r[0], r[1])
                 if card and (r[4][:-1] in t_zawody):
                     shoots = 0
                     card.name = r[4][:-1]
@@ -108,8 +124,109 @@ class ScoreSheet:
                     self.cards.append(card)
                     card = None
 
-    def save(self, fp):
-        self._doc.save(fp)
+        for card in self.cards:
+            card.rect = self._find_card_rect(card)
+
+    def _find_card_rect(self, card):
+        """
+        Zwraca zewnętrzny prostokąt metryczki.
+
+        Obrys jest odczytywany z samego PDF-a, dzięki czemu składanie działa
+        zarówno dla zwykłych, jak i wyższych metryczek.
+        """
+        point = pymupdf.Point(card.X, card.Y)
+        candidates = []
+        for drawing in card.page.get_drawings():
+            rect = pymupdf.Rect(drawing["rect"])
+            if (
+                rect.contains(point)
+                and rect.width >= card.page.rect.width * 0.7
+                and 80 <= rect.height <= 200
+            ):
+                candidates.append(rect)
+        if candidates:
+            return max(candidates, key=lambda rect: rect.get_area())
+
+        # Zapas dla zgodnego układu, w którym obrys nie jest osobną ścieżką.
+        return pymupdf.Rect(
+            card.X - 365.5,
+            card.Y - 22,
+            card.X + 123,
+            card.Y + 92 + self.card_size.value,
+        )
+
+    def _copy_page_background(self, output_page, page_number):
+        """
+        Kopiuje marginesy strony bez środkowego obszaru z metryczkami.
+        """
+        source_page = self._doc[page_number]
+        page_cards = [
+            card for card in self.cards if card.page_number == page_number
+        ]
+        content_rect = pymupdf.Rect(
+            min(card.rect.x0 for card in page_cards),
+            min(card.rect.y0 for card in page_cards),
+            max(card.rect.x1 for card in page_cards),
+            max(card.rect.y1 for card in page_cards),
+        )
+        page_rect = source_page.rect
+        gap = 1
+        background_parts = (
+            pymupdf.Rect(0, 0, page_rect.width, content_rect.y0 - gap),
+            pymupdf.Rect(0, content_rect.y1 + gap, page_rect.width, page_rect.height),
+            pymupdf.Rect(
+                0,
+                content_rect.y0 - gap,
+                content_rect.x0 - gap,
+                content_rect.y1 + gap,
+            ),
+            pymupdf.Rect(
+                content_rect.x1 + gap,
+                content_rect.y0 - gap,
+                page_rect.width,
+                content_rect.y1 + gap,
+            ),
+        )
+        for clip in background_parts:
+            if not clip.is_empty:
+                output_page.show_pdf_page(
+                    clip,
+                    self._doc,
+                    page_number,
+                    clip=clip,
+                    keep_proportion=False,
+                )
+
+    def save(self, fp, selected_cards=None):
+        if selected_cards is None:
+            self._doc.save(fp)
+            return
+
+        target_slots = self.cards[:len(selected_cards)]
+        last_page_number = target_slots[-1].page_number
+        output_doc = pymupdf.open()
+        try:
+            for page_number in range(last_page_number + 1):
+                source_page = self._doc[page_number]
+                output_page = output_doc.new_page(
+                    width=source_page.rect.width,
+                    height=source_page.rect.height,
+                )
+                self._copy_page_background(output_page, page_number)
+
+            for source_card, target_slot in zip(selected_cards, target_slots):
+                output_doc[target_slot.page_number].show_pdf_page(
+                    target_slot.rect,
+                    self._doc,
+                    source_card.page_number,
+                    clip=source_card.rect,
+                    keep_proportion=False,
+                )
+
+            output_doc.set_metadata(self._doc.metadata)
+            output_doc.save(fp, garbage=4, deflate=True)
+        finally:
+            output_doc.close()
 
     def reset(self):
         self.cards = []
@@ -217,6 +334,7 @@ class MainUI(QMainWindow):
             return
         opacity = bool(self.ui.cb_przezroczyste.isChecked())
         card_size = self.score_sheet.card_size
+        selected_cards = []
         for i, c in enumerate(self.score_sheet.cards):
             if i >= 12:
                 QMessageBox.warning(
@@ -229,19 +347,34 @@ class MainUI(QMainWindow):
             dop = getattr(self.ui, f"k{i+1}_dop")
             cb_enable = getattr(self.ui, f"k{i+1}_en")
             if not cb_enable.isChecked():
-                card_hide(c.page, c.X, c.Y, card_size.value)
                 continue
+            selected_cards.append(c)
             if klubowa.isChecked():
                 stamp_klubowa(c.page, c.X, c.Y, 0.60 if opacity else 1)
             if wlasna.isChecked():
                 stamp_wlasna(c.page, c.X, c.Y, 0.60 if opacity else 1)
             if dop.isChecked():
                 stamp_dop(c.page, c.X, c.Y, card_size.value)
-        self.score_sheet.save(filename[0])
-        QMessageBox.information(
-            self, "Zrobione!",
-            f"Ostemplowane metryczki zapisano do: {filename[0]}"
-        )
+        if not selected_cards:
+            QMessageBox.warning(
+                self, "Oh!", "Nie wybrano żadnej metryczki do zapisania!"
+            )
+            return
+        self.score_sheet.save(filename[0], selected_cards)
+        try:
+            open_pdf(filename[0])
+        except Exception as error:
+            QMessageBox.warning(
+                self,
+                "Nie udało się otworzyć PDF",
+                f"Plik został zapisany poprawnie, ale nie udało się go "
+                f"automatycznie otworzyć:\n{error}",
+            )
+        else:
+            QMessageBox.information(
+                self, "Zrobione!",
+                f"Ostemplowane metryczki zapisano do: {filename[0]}"
+            )
         self.score_sheet.reset()
 
 
