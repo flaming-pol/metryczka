@@ -62,44 +62,68 @@ def resource_path(relative_path):
 
 def stamp(page, x, y, color, text, size=20, opacity=1):
     """
-    Funkcja umieszcza pieczątkę w ramce ma matryczce.
+    Funkcja umieszcza pieczątkę w ramce na metryczce.
 
-    Uwaga: pozycja obliczna na podstawie lokalizacji napisu "pieczątka" na metryczce.
+    Uwaga: pozycja obliczana na podstawie lokalizacji napisu "pieczątka" na metryczce.
     """
     clr = pymupdf.utils.getColor(color)
+
     # filler
     if opacity == 1:
-        page.draw_rect([x-12, y, x+40, y+10], color=(1, 1, 1), fill=(1, 1, 1), width=1)
+        page.draw_rect(
+            [x - 12, y, x + 40, y + 10],
+            color=(1, 1, 1),
+            fill=(1, 1, 1),
+            width=1
+        )
+
     # ramka
-    page.draw_rect([x-46, y-14, x-46+127, y-14+38], color=clr,
-                   width=2.5, stroke_opacity=opacity)
+    page.draw_rect(
+        [x - 46, y - 14, x - 46 + 127, y - 14 + 38],
+        color=clr,
+        width=2.5,
+        stroke_opacity=opacity
+    )
+
     font = resource_path("fonts/lmroman12-bold.otf")
-    page.insert_text(pymupdf.Point(x-45, y+13),
-                     text,
-                     fontfile=font,
-                     fontname="f0",
-                     fontsize=size,
-                     rotate=0,
-                     color=clr,
-                     fill_opacity=opacity)
+
+    page.insert_text(
+        pymupdf.Point(x - 45, y + 13),
+        text,
+        fontfile=font,
+        fontname="f0",
+        fontsize=size,
+        rotate=0,
+        color=clr,
+        fill_opacity=opacity
+    )
 
 
 def stamp_dop(page, x, y):
     """
     Pieczątka "dopuszczenie".
 
-    Uwaga: pozycja obliczna na podstawie lokalizacji napisu "pieczątka" na metryczce.
+    Uwaga: pozycja obliczana na podstawie lokalizacji napisu "pieczątka" na metryczce.
     """
     clr = pymupdf.utils.getColor("blue")
-    page.draw_rect([x-95, y+47, x-48, y+67], color=clr, width=2.5)
+
+    page.draw_rect(
+        [x - 95, y + 47, x - 48, y + 67],
+        color=clr,
+        width=2.5
+    )
+
     font = resource_path("fonts/lmroman12-bold.otf")
-    page.insert_text(pymupdf.Point(x-92, y+62),
-                     "DOP.",
-                     fontfile=font,
-                     fontname="f0",
-                     fontsize=15,
-                     rotate=0,
-                     color=clr)
+
+    page.insert_text(
+        pymupdf.Point(x - 92, y + 62),
+        "DOP.",
+        fontfile=font,
+        fontname="f0",
+        fontsize=15,
+        rotate=0,
+        color=clr
+    )
 
 
 def stamp_wlasna(page, x, y, opacity=1):
@@ -123,20 +147,37 @@ def main():
         epilog='Autor: m_c',
         add_help=False
     )
-    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
-                        help='wyświetla ten ekran informacyjny')
-    parser.add_argument('--pdf', '-p', type=str, action='store', required=True,
-                        help='ścieżka do pliku pdf z metryczkami')
+
+    parser.add_argument(
+        '-h',
+        '--help',
+        action='help',
+        default=argparse.SUPPRESS,
+        help='wyświetla ten ekran informacyjny'
+    )
+
+    parser.add_argument(
+        '--pdf',
+        '-p',
+        type=str,
+        action='store',
+        required=True,
+        help='ścieżka do pliku pdf z metryczkami'
+    )
+
     args = parser.parse_args()
     file = args.pdf
+
     if not os.path.isfile(file):
         print(f"Wskazany plik {file} nie istnieje...")
         exit(1)
 
     dop = input("Czy dopuszczenie? [t]ak/[N]ie  ")
+
     dop_cnt = 0
     if dop in ["t", "T"]:
         dop_input = input("   na ilu metryczkach? [1] ")
+
         if not dop_input:
             dop_cnt = 1
         elif not dop_input.isdigit() or int(dop_input) < 1:
@@ -144,36 +185,73 @@ def main():
             exit(1)
         else:
             dop_cnt = int(dop_input)
+
     print("\n")
 
     doc = pymupdf.open(file)
     stamp_pos = (0, 0)
+
     for page in doc:
+        # Jawne przygotowanie strumienia zawartości strony
+        # przed dodawaniem nowych elementów graficznych.
+        page.wrap_contents()
+
         w = page.get_text("words")
+
         for r in w:
             if r[4] == "pieczątka":
                 stamp_pos = (r[0], r[1])
                 continue
+
             if r[4][:-1] in t_zawody:
-                choice = input(f"{r[4][:-1]}   -  [w]łasna/[k]lubowa/[P]omiń:  ")
+                choice = input(
+                    f"{r[4][:-1]}   -  [w]łasna/[k]lubowa/[P]omiń:  "
+                )
+
                 if choice in ["W", "w"]:
-                    stamp_wlasna(page, stamp_pos[0], stamp_pos[1])
+                    stamp_wlasna(
+                        page,
+                        stamp_pos[0],
+                        stamp_pos[1]
+                    )
                     print("WŁASNA")
+
                 elif choice in ["K", "k"]:
-                    stamp_klubowa(page, stamp_pos[0], stamp_pos[1])
+                    stamp_klubowa(
+                        page,
+                        stamp_pos[0],
+                        stamp_pos[1]
+                    )
                     print("KLUBOWA")
+
                 else:
                     print("POMINIĘTE\n\n")
-                    continue  # symbol dopuszczenia tylko na ostemplowanych metryczkach
+                    continue
+
+                # symbol dopuszczenia tylko na ostemplowanych metryczkach
                 if dop_cnt > 0:
-                    stamp_dop(page, stamp_pos[0], stamp_pos[1])
+                    stamp_dop(
+                        page,
+                        stamp_pos[0],
+                        stamp_pos[1]
+                    )
                     print("DOP!")
                     dop_cnt -= 1
+
                 print("\n")
+
     if doc:
         new_name = file[:-4] + "-STAMP" + file[-4:]
-        doc.save(new_name)
-        print(f"Ostemplowane metryczki zapisano do pliku: {new_name}")
+
+        doc.save(
+            new_name,
+            garbage=4,
+            deflate=True
+        )
+
+        print(
+            f"Ostemplowane metryczki zapisano do pliku: {new_name}"
+        )
 
 
 if __name__ == "__main__":
