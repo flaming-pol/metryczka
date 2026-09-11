@@ -111,34 +111,32 @@ jobs:
         shell: bash
         run: |
           set -e
-          mkdir -p downgraded
+          mkdir -p final
+
           shopt -s nullglob
-          found=0
           for f in out/*.pdf; do
-            found=1
             base="$(basename "$f")"
+
+            # kopia kontrolna PRZED Ghostscriptem
+            cp "$f" "final/BEFORE_GS-$base"
+
+            # wersja po downgrade
             gs \
               -sDEVICE=pdfwrite \
               -dCompatibilityLevel=1.4 \
               -dPDFSETTINGS=/prepress \
               -dNOPAUSE \
-              -dQUIET \
               -dBATCH \
-              -sOutputFile="downgraded/$base" \
+              -sOutputFile="final/AFTER_GS-$base" \
               "$f"
           done
 
-          if [ "$found" -eq 0 ]; then
-            echo "Nie znaleziono PDF-ów w out/"
-            exit 1
-          fi
-
-          ls -la downgraded || true
+          ls -lh final
 
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: metryczka-output
-          path: downgraded/*
-          if-no-files-found: warn
+          path: final/*
+          if-no-files-found: error
