@@ -22,10 +22,8 @@ import pymupdf
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
-    QDialog,
     QApplication,
     QMainWindow,
-    QPushButton,
     QFileDialog,
     QMessageBox,
 )
@@ -35,7 +33,6 @@ from metryczka_cli import (
     stamp_dop,
     stamp_wlasna,
     stamp_klubowa,
-    card_hide,
     t_zawody,
 )
 
@@ -215,6 +212,10 @@ class ScoreSheet:
                 self._copy_page_background(output_page, page_number)
 
             for source_card, target_slot in zip(selected_cards, target_slots):
+                # Metoda "show_pdf_page" z biblioteki pymupdf:
+                # Display a page of another PDF. This is similar to Page.insert_image()
+                #  but the source page will appear like a copy of itself and
+                #  will not be rasterized.
                 output_doc[target_slot.page_number].show_pdf_page(
                     target_slot.rect,
                     self._doc,
