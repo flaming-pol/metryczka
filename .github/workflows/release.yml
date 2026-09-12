@@ -18,7 +18,7 @@ jobs:
           - os: macos-latest
             TARGET: macos-arm64
             CMD_BUILD: >
-              pyinstaller -w --add-data="fonts/*:fonts" --name metryczka metryczka.py &&
+              pyinstaller -F -w --add-data="fonts/*:fonts" --name metryczka metryczka.py &&
               cd dist/ &&
               zip -ry9 metryczka-macOS-arm64 metryczka.app/
             OUT_FILE_NAME: metryczka-macOS-arm64.zip
@@ -27,7 +27,7 @@ jobs:
           - os: macos-15-intel
             TARGET: macos-intel
             CMD_BUILD: >
-              pyinstaller -w --add-data="fonts/*:fonts" --name metryczka metryczka.py &&
+              pyinstaller -F -w --add-data="fonts/*:fonts" --name metryczka metryczka.py &&
               cd dist/ &&
               zip -ry9 metryczka-macOS-intel metryczka.app/
             OUT_FILE_NAME: metryczka-macOS-intel.zip
