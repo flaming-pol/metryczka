@@ -49,6 +49,7 @@ def open_pdf(filename):
 class CardSize(IntEnum):
     SMALL = 0
     MEDIUM = 28
+    BIG = 56
 
 
 class ScoreCard:
@@ -95,26 +96,21 @@ class ScoreSheet:
                             # np. Pcz25m10z13
                             # np. Pcz25m30ISSF
                             # np. Kcz50m20L
-                            if not s[-1].isdecimal():
-                                # usuniecie literek z końca
-                                for i, c in enumerate(reversed(s)):
-                                    if c.isdecimal():
-                                        s = s[:-i]
-                                        break
-                            for i, c in enumerate(reversed(s)):
-                                # usuniecie "z" w przypadku 10z13, 20z30 itp.
+                            for i, c in enumerate(s):
                                 if not c.isdecimal():
-                                    s = s[i+1:]
+                                    shoots = int(s[:i])
                                     break
-                            shoots = int(s)
-                        print(f"{card.name} : {shoots}")
-                        if (shoots >= 15) and (shoots < 30) and (
+                        # print(f"{card.name} : {shoots}")
+                        if (shoots > 10) and (shoots <= 20) and (
                                 self.card_size < CardSize.MEDIUM):
                             self.card_size = CardSize.MEDIUM
-                        if shoots > 20 or shoots == 0:
+                        elif (shoots > 20) and (shoots <= 30) and (
+                                self.card_size < CardSize.BIG):
+                            self.card_size = CardSize.BIG
+                        if shoots > 30 or shoots == 0:
                             QMessageBox.critical(
                                 None, "Oh!",
-                                f"W tej wersji program obsługuje max. konkurencje 20-strzałowe ({card.name} : {shoots})!"
+                                f"W tej wersji program obsługuje max. konkurencje 30-strzałowe ({card.name} : {shoots})!"
                             )
                             card = None
                             continue
