@@ -25,6 +25,7 @@ from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QApplication,
+    QWidget,
     QMainWindow,
     QFileDialog,
     QMessageBox,
@@ -436,6 +437,16 @@ class MainUI(QMainWindow):
         self.score_sheet.reset()
 
 
+def repolish_recursive(widget: QWidget):
+    widget.style().unpolish(widget)
+    widget.style().polish(widget)
+    widget.update()
+    for child in widget.findChildren(QWidget):
+        child.style().unpolish(child)
+        child.style().polish(child)
+        child.update()
+
+
 def run_gui():
     """
     Uruchomienie aplikacji w trybie graficznym.
@@ -449,6 +460,7 @@ def run_gui():
         }
     """)
     window = MainUI()
+    app.styleHints().colorSchemeChanged.connect(lambda _: repolish_recursive(window))
     window.show()
     sys.exit(app.exec())
 
