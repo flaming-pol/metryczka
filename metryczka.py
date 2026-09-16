@@ -1,5 +1,5 @@
 #  Metryczka -- generowanie metryczek do zawodów KS Amator
-#  Copyright (C) 2023-2025  mc (kontakt@zakaznoszeniabroni.pl)
+#  Copyright (C) 2023-2026  mc (kontakt@zakaznoszeniabroni.pl)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import argparse
 import os
+import re
 import sys
 from enum import IntEnum
 
@@ -29,12 +31,7 @@ from PyQt6.QtWidgets import (
 )
 
 from gui.metryczka_ui import Ui_MainWindow
-from metryczka_cli import (
-    stamp_dop,
-    stamp_wlasna,
-    stamp_klubowa,
-    t_zawody,
-)
+from zawody import t_zawody
 
 
 def open_pdf(filename):
@@ -44,6 +41,65 @@ def open_pdf(filename):
     pdf_url = QUrl.fromLocalFile(os.path.abspath(filename))
     if not QDesktopServices.openUrl(pdf_url):
         raise OSError("System nie znalazł aplikacji do otwierania plików PDF.")
+
+
+def resource_path(relative_path):
+    """Zmienia ścieżkę do pliku na potrzeby uruchomienia przez pyinstaller."""
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
+def stamp(page, x, y, color, text, size=20, opacity=1):
+    """
+    Funkcja umieszcza pieczątkę w ramce ma metryczce.
+
+    Uwaga: pozycja obliczana na podstawie lokalizacji napisu "pieczątka" na metryczce.
+    """
+    clr = pymupdf.utils.getColor(color)
+    # filler
+    if opacity == 1:
+        page.draw_rect([x-12, y, x+40, y+10], color=(1, 1, 1), fill=(1, 1, 1), width=1)
+    # ramka
+    page.draw_rect([x-46, y-14, x-46+127, y-14+38], color=clr,
+                   width=2.5, stroke_opacity=opacity)
+    font = resource_path("fonts/lmroman12-bold.otf")
+    page.insert_text(pymupdf.Point(x-45, y+13),
+                     text,
+                     fontfile=font,
+                     fontname="f0",
+                     fontsize=size,
+                     rotate=0,
+                     color=clr,
+                     fill_opacity=opacity)
+
+
+def stamp_dop(page, x, y, y_offset=0):
+    """
+    Pieczątka "dopuszczenie".
+
+    Uwaga: pozycja obliczana na podstawie lokalizacji napisu "pieczątka" na metryczce.
+    """
+    clr = pymupdf.utils.getColor("blue")
+    page.draw_rect([x-95, y+47+y_offset, x-48, y+67+y_offset], color=clr, width=2.5)
+    font = resource_path("fonts/lmroman12-bold.otf")
+    page.insert_text(pymupdf.Point(x-92, y+62+y_offset),
+                     "DOP.",
+                     fontfile=font,
+                     fontname="f0",
+                     fontsize=15,
+                     rotate=0,
+                     color=clr)
+
+
+def stamp_wlasna(page, x, y, opacity=1):
+    stamp(page, x, y, "mediumseagreen", "WŁASNA", 25, opacity)
+
+
+def stamp_klubowa(page, x, y, opacity=1):
+    stamp(page, x, y, "firebrick1", "KLUBOWA", 21, opacity)
 
 
 class CardSize(IntEnum):
@@ -238,6 +294,7 @@ class MainUI(QMainWindow):
         self.ui.setupUi(self)
         self.show()
 
+        self.ui.lbl_filename.setHidden(True)
         self.ui.pbWczytaj.clicked.connect(self.load_data)
         self.ui.pbZapisz.clicked.connect(self.save_data)
         self.ui.pbReset.clicked.connect(self.reset_scene)
@@ -252,6 +309,7 @@ class MainUI(QMainWindow):
     def reset_scene(self):
         self.score_sheet = None
         self.ui.cb_przezroczyste.setChecked(True)
+        self.ui.lbl_filename.setHidden(True)
         for i in range(1, 13):
             text = getattr(self.ui, f"k{i}_edit")
             btn_klubowa = getattr(self.ui, f"k{i}_klubowa")
@@ -317,6 +375,9 @@ class MainUI(QMainWindow):
                 "Nie udało się wczytać żadnej metryczki!"
             )
             self.score_sheet = None
+        else:
+            self.ui.lbl_filename.setText(os.path.basename(filename[0]))
+            self.ui.lbl_filename.setHidden(False)
 
     def save_data(self):
         if not self.score_sheet:
@@ -375,9 +436,119 @@ class MainUI(QMainWindow):
         self.score_sheet.reset()
 
 
-if __name__ == "__main__":
+def run_gui():
+    """
+    Uruchomienie aplikacji w trybie graficznym.
+    """
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
     window = MainUI()
     window.show()
     sys.exit(app.exec())
+
+
+def run_cli(source_file, dest_file, competitions, dop=False):
+    """
+    Uruchomienie aplikacji w trybie konsolowym.
+    """
+    if not os.path.isfile(source_file):
+        print(f"Wskazany plik z metryczkami ({source_file}) nie istnieje...")
+        sys.exit(1)
+    if not dest_file.endswith(".pdf"):
+        dest_file += ".pdf"
+    if os.path.isfile(dest_file):
+        print(f"Uwaga! Plik wynikowy ({dest_file}) istnieje i będze nadpisany!\n")
+
+    pattern = r"^[A-Za-z][A-Za-z0-9]*:[wkb](?:,[A-Za-z][A-Za-z0-9]*:[wkb])*$"
+    if not re.match(pattern, competitions):
+        print("Błąd składni w definicji konkurencji! Konkurencje definiujemy zgodnie "
+              "ze wzorcem: NAZWA:OPCJE, gdzie opcje to k,w,b.\n"
+              "Przykład: metryczka.py --no-gui --competitions=Kcz10m5:w,Pcz25m10z13:k")
+        sys.exit(1)
+
+    comp_split = competitions.split(",")
+    comp_split = [tuple(x.split(":")) for x in comp_split]
+
+    score_sheet = ScoreSheet(source_file)
+    selected_cards = []
+    for comp, o in comp_split:
+        found = False
+        for c in score_sheet.cards:
+            if comp.upper() == c.name.upper():
+                selected_cards.append(c)
+                if o == "k":
+                    stamp_klubowa(c.page, c.X, c.Y, 0.60)
+                if o == "w":
+                    stamp_wlasna(c.page, c.X, c.Y, 0.60)
+                if dop:
+                    stamp_dop(c.page, c.X, c.Y, score_sheet.card_size.value)
+                    o += "D"
+                    dop = False
+                print(f"{comp}\t\t -> {o.upper()}")
+                found = True
+                break
+        if not found:
+            print(f"Uwaga: konkurencja {comp} nie znaleziona na metryczkach!")
+    if not selected_cards:
+        print("Nie wybrano żadnej metryczki do zapisania!")
+        sys.exit(1)
+    score_sheet.save(dest_file, selected_cards)
+    print(f"\nZapisano do {dest_file}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog='metryczka.py',
+        description='Program do stemplowania metryczek na zawody KS Amator. '
+                    'Po wskazaniu pliku z metryczkami program umożliwi dodanie pieczątki '
+                    '"KLUBOWA" lub "WŁASNA" oraz opcjonalnie "DOP." Edytowany przez '
+                    'program plik z metryczkami zostanie zapisany w tym samym katalogu '
+                    'co plik źródłowy, ale z dopisanym tekstem -stamp w nazwie pliku. '
+                    'UWAGA: program jest zgodny ze wzorem metryczek KS Amator '
+                    ' obowiązującym od dnia 25.04.2025.',
+        epilog='Autor: m_c',
+        add_help=False
+    )
+    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
+                        help='wyświetla ten ekran informacyjny')
+    parser.add_argument('--no-gui', '-n', action='store_true', required=False,
+                        help='uruchamia program w trybie konsolowym')
+    parser.add_argument('--in', dest="input_file", action='store', required=False,
+                        help='ścieżka do pliku pdf z metryczkami (plik źródłowy)')
+    parser.add_argument('--out', dest="output_file", action='store', required=False,
+                        help='nazwa pliku z wstawionymi pieczątkami. Jeśli nie podasz '
+                        'nazwy pliku, ostęplowane metryczki zostaną zapisane pod nazwą '
+                        'taką jak plik źródłowy tylko z dopiskiem "-stamp"')
+    parser.add_argument('-d', action='store_true', required=False,
+                        help='dopuszczenie - pierwsza metryczka będzie oznaczona "DOP"')
+    parser.add_argument('--competitions', '-c', action='store', required=False,
+                        help='Nazwy konkurencji, które chcesz umieścić na metryczkach, '
+                        'wg. formatu: NAZWA_KONKURECNJI:OPCJE. Program przewiduje następujące '
+                        'opcje do konkurencji: "w" - pieczątka "własna", "k" - pieczątka '
+                        '"klubowa", "b" - brak pieczątki. Gdy strzelasz więcej konkurencji '
+                        'rozdziel je przecinkiem. Przykład: Kcz10m5:w,Pcz25m10z13:k program '
+                        'wygeneruje metryczki dla konkurencji "Kcz10m5" z pieczątką "własna" '
+                        'oraz dla konkurencji Pcz25m10z13 z pieczątką "klubowa". '
+                        'Wskazane konkurencje muszą znajdować się na metryczkach źródłowych.')
+    args = parser.parse_args()
+
+    if not args.no_gui:
+        run_gui()
+    else:
+        missing = []
+        if args.input_file is None:
+            missing.append("--in")
+        if args.output_file is None and args.input_file is not None:
+            dest_file = args.input_file[:-4] + "-STAMP.pdf"
+        elif args.output_file is not None:
+            dest_file = args.output_file
+        if args.competitions is None:
+            missing.append("--competitions")
+        if missing:
+            parser.error(
+                "w trybie konsolowym wymagane są parametry: " + ", ".join(missing)
+            )
+        run_cli(source_file=args.input_file,
+                dest_file=dest_file,
+                competitions=args.competitions,
+                dop=args.d)

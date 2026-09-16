@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'gui/metryczka_ui.ui'
+# Form implementation generated from reading ui file 'metryczka_ui.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.2
 #
@@ -379,12 +379,6 @@ class Ui_MainWindow(object):
         self.k12_dop.setChecked(False)
         self.k12_dop.setObjectName("k12_dop")
         self.verticalLayout_4.addWidget(self.k12_dop)
-        self.cb_przezroczyste = QtWidgets.QCheckBox(parent=self.k1_group)
-        self.cb_przezroczyste.setEnabled(True)
-        self.cb_przezroczyste.setGeometry(QtCore.QRect(230, 10, 151, 20))
-        self.cb_przezroczyste.setChecked(True)
-        self.cb_przezroczyste.setObjectName("cb_przezroczyste")
-        self.cb_przezroczyste.setVisible(False)
         self.label_3 = QtWidgets.QLabel(parent=self.k1_group)
         self.label_3.setGeometry(QtCore.QRect(10, 500, 521, 16))
         font = QtGui.QFont()
@@ -470,6 +464,16 @@ class Ui_MainWindow(object):
         self.k12_en.setChecked(False)
         self.k12_en.setObjectName("k12_en")
         self.verticalLayout_7.addWidget(self.k12_en)
+        self.lbl_filename = QtWidgets.QLabel(parent=self.k1_group)
+        self.lbl_filename.setEnabled(True)
+        self.lbl_filename.setGeometry(QtCore.QRect(10, 10, 541, 16))
+        font = QtGui.QFont()
+        font.setBold(True)
+        self.lbl_filename.setFont(font)
+        self.lbl_filename.setStyleSheet("color: rgb(170, 0, 255);")
+        self.lbl_filename.setScaledContents(False)
+        self.lbl_filename.setWordWrap(False)
+        self.lbl_filename.setObjectName("lbl_filename")
         self.pbWczytaj = QtWidgets.QPushButton(parent=self.centralwidget)
         self.pbWczytaj.setGeometry(QtCore.QRect(10, 10, 221, 22))
         self.pbWczytaj.setObjectName("pbWczytaj")
@@ -485,6 +489,11 @@ class Ui_MainWindow(object):
         self.pbReset = QtWidgets.QPushButton(parent=self.centralwidget)
         self.pbReset.setGeometry(QtCore.QRect(530, 10, 50, 22))
         self.pbReset.setObjectName("pbReset")
+        self.cb_przezroczyste = QtWidgets.QCheckBox(parent=self.centralwidget)
+        self.cb_przezroczyste.setEnabled(True)
+        self.cb_przezroczyste.setGeometry(QtCore.QRect(430, 570, 151, 20))
+        self.cb_przezroczyste.setChecked(True)
+        self.cb_przezroczyste.setObjectName("cb_przezroczyste")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 606, 19))
@@ -598,21 +607,12 @@ class Ui_MainWindow(object):
         self.k10_dop.setText(_translate("MainWindow", "DOPUSZCZENIE"))
         self.k11_dop.setText(_translate("MainWindow", "DOPUSZCZENIE"))
         self.k12_dop.setText(_translate("MainWindow", "DOPUSZCZENIE"))
-        self.cb_przezroczyste.setToolTip(_translate("MainWindow", "<html><head/><body><p>Jeśli treść metryczki nachodzi na pieczątkę, zaznaczenie tej opcji spowoduje użycie półprzezroczystej grafiki pieczątki, aby uwidoczniść pełną treść metryczki.</p></body></html>"))
-        self.cb_przezroczyste.setText(_translate("MainWindow", "Półprzezroczyste"))
         self.label_3.setText(_translate("MainWindow", "Pamiętaj, aby wydrukować metryczki na kolorowej drukarce!"))
+        self.lbl_filename.setText(_translate("MainWindow", "Ścieżka do pliku"))
         self.pbWczytaj.setText(_translate("MainWindow", "Wczytaj plik z metryczkami"))
         self.pbZapisz.setText(_translate("MainWindow", "Zapisz ostemplowane metryczki"))
         self.label_1.setText(_translate("MainWindow", "Autor: m_c"))
-        self.label_2.setText(_translate("MainWindow", "wersja 1.2 z dn. 27.06.2026"))
+        self.label_2.setText(_translate("MainWindow", "wersja 1.3 z dn. 15.09.2026"))
         self.pbReset.setText(_translate("MainWindow", "Reset"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec())
+        self.cb_przezroczyste.setToolTip(_translate("MainWindow", "<html><head/><body><p>Jeśli treść metryczki nachodzi na pieczątkę, zaznaczenie tej opcji spowoduje użycie półprzezroczystej grafiki pieczątki, aby uwidoczniść pełną treść metryczki.</p></body></html>"))
+        self.cb_przezroczyste.setText(_translate("MainWindow", "Półprzezroczyste"))
