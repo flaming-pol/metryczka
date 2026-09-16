@@ -442,6 +442,12 @@ def run_gui():
     """
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
+    app.setStyleSheet("""
+        QPushButton:checked {
+            background-color: palette(highlight);
+            color: palette(highlighted-text);
+        }
+    """)
     window = MainUI()
     window.show()
     sys.exit(app.exec())
