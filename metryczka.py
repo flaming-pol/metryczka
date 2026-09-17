@@ -336,12 +336,7 @@ class MainUI(QMainWindow):
                 continue
             cb_dop = getattr(self.ui, f"k{i}_dop")
             if cb_dop.isChecked():
-                QMessageBox.critical(
-                    self, "Oh!",
-                    "Pieczątka z dopuszczeneim może być tylko na jednej metryczce!"
-                )
-                cb_main_dop = getattr(self.ui, f"k{dop_id}_dop")
-                cb_main_dop.setChecked(False)
+                cb_dop.setChecked(False)
 
     def load_data(self):
         self.reset_scene()
